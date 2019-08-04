@@ -21,7 +21,7 @@ class Model:
             augment_val: bool = True, callbacks: list = None):
         pass
 
-    def evaluate(self, x, y, batch_size=16, verbose=False):
+    def evaluate(self, x, y, batch_size: int=16, verbose: bool=False):
         pass
     
     def loss(self):
@@ -32,7 +32,7 @@ class Model:
 
     def metrics(self):
         pass
-    
+
     def load_weights(self):
         self.network.load_weights(self.weights_filename)
 
