@@ -33,6 +33,9 @@ class Model:
     def metrics(self):
         pass
 
+    def decode_output(self, x):
+        return x
+
     def load_weights(self):
         self.network.load_weights(self.weights_filename)
 
