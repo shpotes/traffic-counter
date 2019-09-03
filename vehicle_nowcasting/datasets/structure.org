@@ -1,0 +1,16 @@
+* Dataset components 
+** metadata :: pd.DataFrame
+*** filepath | split | label | coordinates (xy)
+** sources :: List[Tuple[str, int, Tuple[int, int, int, int]]]
+*** (filepath, label, coordinates)
+** anchors :: np.ndarray
+*** `generateAnchors`
+
+* Dataset pipeline
+** generate dataset
+*** `tf.data.Dataset.from_tensor_slices`
+** load dataset
+*** izi pizi
+** preprocess_input
+*** image preprocessing
+*** iou anchors
