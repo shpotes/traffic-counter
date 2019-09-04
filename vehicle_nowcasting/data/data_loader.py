@@ -66,6 +66,14 @@ def compute_anchor_boxes(anchors, img, bbox_gt):
     anchors = tf.constant(anchors, dtype=tf.int32) # TODO: parameters
     iou_matrix = iou(anchors, bbox_gt[:, 1:])
 
+    max_score = tf.reduce_max(iou_matrix, axis=0)
+    best = tf.cast(tf.where(iou_matrix == max_score), dtype=tf.int32)
+    best = tf.concat([
+        tf.reshape(tf.gather(bbox_gt, best[:, 1])[:, 0], shape=[-1, 1]),
+        tf.gather(anchors, best[:, 0]),
+        tf.ones((len(best), 1), dtype=tf.int32)],
+                     axis=1)
+
     pos = tf.boolean_mask(anchors, tf.reduce_any(iou_matrix > 0.7, axis=1))
     labels = tf.gather(bbox_gt[:, 0], tf.where(iou_matrix > 0.7)[:, 1])
     labels = tf.reshape(labels, (-1, 1))
@@ -76,10 +84,7 @@ def compute_anchor_boxes(anchors, img, bbox_gt):
     labels = tf.zeros(shape=(len(neg), 1), dtype=tf.int32)
     neg = tf.concat([labels, neg, labels], axis=1)
 
-    gt = tf.zeros((len(bbox_gt), 1), dtype=tf.int32) + 2
-    gt = tf.concat([bbox_gt, gt], axis=1)
-
-    anchor_boxes = tf.concat([pos, neg, gt], axis=0)
+    anchor_boxes = tf.concat([pos, neg, best], axis=0)
 
     return img, anchor_boxes
 
@@ -147,6 +152,7 @@ def make_dataset(sources: List[Tuple[str, List[Tuple[str, Tuple[int]]]]],
 
     ds = ds.map(load, num_parallel_calls=num_parallel_calls)
     ds = ds.map(preprocess_input)
+
     anchors = generate_anchors()
     ds = ds.map(lambda x, y: compute_anchor_boxes(anchors, x, y), num_parallel_calls)
 
@@ -157,4 +163,5 @@ def make_dataset(sources: List[Tuple[str, List[Tuple[str, Tuple[int]]]]],
         ds = ds.map(lambda x, y: hierarchical_sampling(x, y, batch_size, N_sampling=1))
 
     ds = ds.prefetch(1)
+
     return ds
