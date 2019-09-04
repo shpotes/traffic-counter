@@ -5,8 +5,6 @@ Many areas of transportation lack data, and decision-makers arround the world of
 
 The goal of this project is to generate an open and high-quality API capable of estimating traffic at key points of the city, based on the information provided by traffic cameras, this in order to help and encourage the development of applications that cover the traffic problem in an intelligent way.
 
-This project is part of the [ai colab](https://sites.google.com/view/aicolab/home) initiative
-
 ## Requirements
 This project requires:
 * tensorflow == 2.0.0-rc0
@@ -18,3 +16,4 @@ This project requires:
 All code in this repository is under the MIT license as specified by the LICENSE file.
 
 ## Acknowledgements
+This project is part of the [ai colab](https://sites.google.com/view/aicolab/home) initiative
