@@ -64,9 +64,26 @@ def generate_anchors(base_size: int = 4,
 
     return anchors
 
-def compute_anchor_boxes(img, bbox_gt):
-    anchors = generate_anchors() # TODO: parameters
+def compute_anchor_boxes(anchors, img, bbox_gt):
+    anchors = tf.constant(anchors, dtype=tf.int32) # TODO: parameters
+    iou_matrix = iou(anchors, bbox_gt[:, 1:])
+
+    pos = tf.boolean_mask(anchors, tf.reduce_any(iou_matrix > 0.7, axis=1))
+    labels = tf.gather(bbox_gt[:, 0], tf.where(iou_matrix > 0.7)[:, 1])
+    labels = tf.reshape(labels, (-1, 1))
+    pos_l = tf.ones(shape=(len(pos), 1), dtype=tf.int32)
+    pos = tf.concat([labels, pos, pos_l], axis=1)
+
+    neg = tf.boolean_mask(anchors, tf.reduce_any(iou_matrix < 0.3, axis=1))
+    labels = tf.zeros(shape=(len(neg), 1), dtype=tf.int32)
+    neg = tf.concat([labels, neg, labels], axis=1)
+
+    gt = tf.zeros((len(bbox_gt), 1), dtype=tf.int32) + 2
+    gt = tf.concat([bbox_gt, gt], axis=1)
     
+    anchor_boxes = tf.concat([pos, neg, gt], axis=0)
+
+    return img, anchor_boxes
     
 def normalize(bbox_raw):
     fill = -(1 << 31)
@@ -87,10 +104,34 @@ def preprocess_input(image, bbox, target_size=(224, 224)):
 
     return img, bbox_gt
 
+def hierarchical_sampling(img, anchors, batch_size, N_sampling=1):
+    """
+    Implementation notes:
+    Increase N_sampling makes quite difficult to trace the image
+    """
+    
+    positive_mask = anchors[:, :, -1] == 1
+    batch_positive = tf.boolean_mask(anchors, positive_mask)
+    batch_positive = tf.random.shuffle(batch_positive)
+    batch_positive_size = tf.math.minimum(len(batch_positive), batch_size // 2)
+    batch_positive = batch_positive[:batch_positive_size, :]
+
+    negative_mask = anchors[:, :, -1] == 0
+    batch_negative = tf.boolean_mask(anchors, negative_mask)
+    batch_negative = tf.boolean_mask(batch_negative, # Remove pad
+                                     tf.reduce_any(batch_negative != 0, axis=1)) 
+    batch_negative = tf.random.shuffle(batch_negative)
+    batch_negative_size = batch_size - batch_positive_size
+    batch_negative = batch_negative[:batch_negative_size, :]
+
+    batch = tf.concat([batch_positive, batch_negative], axis=0)
+    return img, batch
+
 def make_dataset(sources: List[Tuple[str, List[Tuple[str, Tuple[int]]]]],
-                 training: bool = False, batch_size: int = 1,
+                 training: bool = False, batch_size: int = 32,
                  num_epochs: int = 1, num_parallel_calls: int = 1,
-                 shuffle_buffer_size: int = None) -> tf.data.Dataset:
+                 shuffle_buffer_size: int = None, N_sampling=1,
+                 hierarchical: bool = True) -> tf.data.Dataset:
 
     if shuffle_buffer_size is None:
         shuffle_buffer_size = batch_size * 4
@@ -104,9 +145,18 @@ def make_dataset(sources: List[Tuple[str, List[Tuple[str, Tuple[int]]]]],
     })
 
     if training:
-        ds = shuffle(shuffle_buffer_size)
+        ds = ds.shuffle(shuffle_buffer_size)
 
     ds = ds.map(load, num_parallel_calls=num_parallel_calls)
     ds = ds.map(preprocess_input)
-    #ds = ds.map(compute_anchor_boxes)
+    anchors = generate_anchors()
+    ds = ds.map(lambda x, y: compute_anchor_boxes(anchors, x, y), num_parallel_calls)
+
+    ds = ds.repeat(count=num_epochs)
+
+    if hierarchical:
+        ds = ds.padded_batch(N_sampling, ([224, 224, None], [None, 6]))
+        ds = ds.map(lambda x, y: hierarchical_sampling(x, y, batch_size, N_sampling=1))
+
+    ds = ds.prefetch(1)
     return ds
