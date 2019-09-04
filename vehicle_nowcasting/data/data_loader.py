@@ -1,12 +1,11 @@
 import os
-import sys
-import pandas as pd
-import numpy as np
-import tensorflow as tf
-
 from itertools import groupby
 from operator import itemgetter
 from typing import List, Tuple, Dict
+
+import pandas as pd
+import numpy as np
+import tensorflow as tf
 from .generate_anchors import generate_anchors as gen_anch
 from .utils import iou
 
@@ -14,9 +13,8 @@ def build_source_from_metadata(metadata: pd.DataFrame,
                                label_map: Dict[str, int],
                                data_dir: str,
                                excluded_labels: List[str] = [],
-                               mode:str = 'train') -> \
+                               mode: str = 'train') -> \
                                List[Tuple[str, List[Tuple[str, Tuple[int]]]]]:
-
     excluded_labels = set(excluded_labels)
 
     df = metadata.copy()
@@ -27,7 +25,7 @@ def build_source_from_metadata(metadata: pd.DataFrame,
     includes = df.label.apply(lambda x: x not in excluded_labels)
 
     df.label = df.label.apply(lambda x: label_map[x])
-    
+
     bbox = df[['label', 'xmin', 'ymin', 'xmax', 'ymax']].values
     bbox = [tuple(x) for x in bbox]
 
@@ -52,7 +50,7 @@ def generate_anchors(base_size: int = 4,
                      scales: np.ndarray = 2 ** np.arange(3, 10),
                      dx: np.ndarray = 10 * np.arange(20),
                      dy: np.ndarray = 10 * np.arange(20)):
-    
+
     delta = np.transpose([np.tile(dx, len(dy)), np.repeat(dy, len(dx))])
     delta = np.hstack([delta, delta])
     anchors = gen_anch(base_size=base_size, ratios=ratios, scales=scales)
@@ -80,11 +78,11 @@ def compute_anchor_boxes(anchors, img, bbox_gt):
 
     gt = tf.zeros((len(bbox_gt), 1), dtype=tf.int32) + 2
     gt = tf.concat([bbox_gt, gt], axis=1)
-    
+
     anchor_boxes = tf.concat([pos, neg, gt], axis=0)
 
     return img, anchor_boxes
-    
+
 def normalize(bbox_raw):
     fill = -(1 << 31)
     max_length = max(map(len, bbox_raw))
@@ -109,7 +107,7 @@ def hierarchical_sampling(img, anchors, batch_size, N_sampling=1):
     Implementation notes:
     Increase N_sampling makes quite difficult to trace the image
     """
-    
+
     positive_mask = anchors[:, :, -1] == 1
     batch_positive = tf.boolean_mask(anchors, positive_mask)
     batch_positive = tf.random.shuffle(batch_positive)
@@ -119,7 +117,7 @@ def hierarchical_sampling(img, anchors, batch_size, N_sampling=1):
     negative_mask = anchors[:, :, -1] == 0
     batch_negative = tf.boolean_mask(anchors, negative_mask)
     batch_negative = tf.boolean_mask(batch_negative, # Remove pad
-                                     tf.reduce_any(batch_negative != 0, axis=1)) 
+                                     tf.reduce_any(batch_negative != 0, axis=1))
     batch_negative = tf.random.shuffle(batch_negative)
     batch_negative_size = batch_size - batch_positive_size
     batch_negative = batch_negative[:batch_negative_size, :]
@@ -138,7 +136,7 @@ def make_dataset(sources: List[Tuple[str, List[Tuple[str, Tuple[int]]]]],
 
     images, bbox_raw = zip(*sources)
     bbox_info = normalize(bbox_raw)
-    
+
     ds = tf.data.Dataset.from_tensor_slices({
         'image': list(images),
         'bbox_info' : bbox_info
