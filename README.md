@@ -17,3 +17,6 @@ All code in this repository is under the MIT license as specified by the LICENSE
 
 ## Acknowledgements
 This project is part of the [ai colab](https://sites.google.com/view/aicolab/home) initiative
+
+## References
+[1] Inrix. (2019). Scorecard. [online] Available at: http://inrix.com/scorecard/ [Accessed 4 Sep. 2019].
