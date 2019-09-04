@@ -1,9 +1,9 @@
-* Dataset components 
-** metadata :: pd.DataFrame
-*** filepath | split | label | coordinates (xy)
-** sources :: List[Tuple[str, int, Tuple[int, int, int, int]]]
-*** (filepath, label, coordinates)
-** anchors :: np.ndarray
+* DONE Dataset components 
+** DONE metadata :: pd.DataFrame
+*** DONE filepath | split | label | coordinates (xy)
+** DONE sources :: List[Tuple[str, int, Tuple[int, int, int, int]]]
+*** DONE (filepath, label, coordinates)
+** DONE anchors :: np.ndarray
 *** `generateAnchors`
 
 * Dataset pipeline

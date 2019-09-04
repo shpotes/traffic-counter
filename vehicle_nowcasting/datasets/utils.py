@@ -1,9 +1,13 @@
+import cv2
 import tensorflow as tf
+import numpy as np
 
-def xy2wh(arr: tf.Tensor) -> tf.Tensor:
+from typing import Tuple
+
+def xy2wh(arr):
     pass
 
-def wh2xy(arr: tf.Tensor) -> tf.Tensor:
+def wh2xy(arr):
     pass
 
 @tf.function
@@ -29,3 +33,10 @@ def iou(bboxes1: tf.Tensor, bboxes2: tf.Tensor) -> tf.Tensor:
     iou = interArea / (boxAArea + tf.transpose(boxBArea) - interArea)
     
     return iou
+
+def plot_bb(img: np.ndarray, org: np.ndarray,
+            color: Tuple[int, int, int], size: int) -> np.ndarray:
+    for anch in org.astype(int):
+        img = cv2.rectangle(img, (anch[1], anch[2]), 
+                            (anch[3], anch[4]), color, size)
+    return img
