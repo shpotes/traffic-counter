@@ -1,0 +1,4 @@
+tensorflow==2.0.0-rc0
+numpy==1.16.4
+cv2
+pandas
