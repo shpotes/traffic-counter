@@ -11,6 +11,8 @@ This project requires:
 * numpy >= 1.16.4
 * cv2
 * pandas
+* gin-config
+
 
 ## License
 All code in this repository is under the MIT license as specified by the LICENSE file.
