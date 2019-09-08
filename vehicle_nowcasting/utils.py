@@ -39,7 +39,7 @@ def plot_bb(img: np.ndarray, org: np.ndarray,
                             (anch[3], anch[4]), color, size)
     return img
 
-def change_box_order(boxes: tf.tensor, order: str) -> tf.tensor:
+def change_box_order(boxes: tf.Tensor, order: str) -> tf.Tensor:
     """
     Change box order between (xmin, ymin, xmax, ymax) and (xcenter, ycenter, width, height).
     """
