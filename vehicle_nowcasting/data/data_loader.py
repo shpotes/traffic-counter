@@ -3,11 +3,12 @@ from itertools import groupby
 from operator import itemgetter
 from typing import List, Tuple, Dict
 
+import gin
 import pandas as pd
 import numpy as np
 import tensorflow as tf
 from .generate_anchors import generate_anchors as gen_anch
-from .utils import iou
+from vehicle_nowcasting.utils import iou
 
 def build_source_from_metadata(metadata: pd.DataFrame,
                                label_map: Dict[str, int],
@@ -15,6 +16,7 @@ def build_source_from_metadata(metadata: pd.DataFrame,
                                excluded_labels: List[str] = [],
                                mode: str = 'train') -> \
                                List[Tuple[str, List[Tuple[str, Tuple[int]]]]]:
+
     excluded_labels = set(excluded_labels)
 
     df = metadata.copy()
@@ -45,6 +47,7 @@ def load(row):
     img = tf.io.decode_jpeg(img)
     return img, bbox
 
+#@gin.configurable
 def generate_anchors(base_size: int = 4,
                      ratios: List[float] = [1, 1.25, 1.5, 1.75, 2, 2.25, 2.5],
                      scales: np.ndarray = 2 ** np.arange(3, 10),
@@ -63,7 +66,6 @@ def generate_anchors(base_size: int = 4,
     return anchors
 
 def compute_anchor_boxes(anchors, img, bbox_gt):
-    anchors = tf.constant(anchors, dtype=tf.int32) # TODO: parameters
     iou_matrix = iou(anchors, bbox_gt[:, 1:])
 
     max_score = tf.reduce_max(iou_matrix, axis=0)
@@ -130,6 +132,7 @@ def hierarchical_sampling(img, anchors, batch_size, N_sampling=1):
     batch = tf.concat([batch_positive, batch_negative], axis=0)
     return img, batch
 
+#@gin.configurable
 def make_dataset(sources: List[Tuple[str, List[Tuple[str, Tuple[int]]]]],
                  training: bool = False, batch_size: int = 32,
                  num_epochs: int = 1, num_parallel_calls: int = 1,
@@ -153,7 +156,8 @@ def make_dataset(sources: List[Tuple[str, List[Tuple[str, Tuple[int]]]]],
     ds = ds.map(load, num_parallel_calls=num_parallel_calls)
     ds = ds.map(preprocess_input)
 
-    anchors = generate_anchors()
+    anchors = generate_anchors() # TODO: gin-config
+    anchors = tf.constant(anchors, dtype=tf.int32)
     ds = ds.map(lambda x, y: compute_anchor_boxes(anchors, x, y), num_parallel_calls)
 
     ds = ds.repeat(count=num_epochs)
