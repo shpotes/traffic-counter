@@ -39,14 +39,21 @@ def plot_bb(img: np.ndarray, org: np.ndarray,
                             (anch[3], anch[4]), color, size)
     return img
 
-def change_box_order(boxes: tf.Tensor, order: str) -> tf.Tensor:
+def change_box_order(boxes: tf.Tensor,
+                     order: str = 'xyxy2xywh',
+                     with_classes: bool = False) -> tf.Tensor:
     """
-    Change box order between (xmin, ymin, xmax, ymax) and (xcenter, ycenter, width, height).
+    Change box order between (xmin, ymin, xmax, ymax) 
+    and (xcenter, ycenter, width, height).
     """
     assert order in ['xyxy2xywh', 'xywh2xyxy']
+    if with_classes:
+        c = [tf.reshape(boxes[:, 0], shape=(-1, 1))]
+        boxes = boxes[:, 1:]
+    else:
+        c = []
     a = boxes[:, :2]
     b = boxes[:, 2:]
     if order == 'xyxy2xywh':
-        return tf.concat([(a + b) / 2, b - a], 1)
-    return tf.concat([a - b / 2, a + b / 2], 1)
-
+        return tf.concat(c + [(a + b) / 2, b - a], 1)
+    return tf.concat(c + [a - b / 2, a + b / 2], 1)
