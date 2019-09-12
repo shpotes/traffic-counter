@@ -33,10 +33,13 @@ def iou(bboxes1: tf.Tensor, bboxes2: tf.Tensor,
     return iou
 
 def plot_bb(img: np.ndarray, org: np.ndarray,
-            color: Tuple[int, int, int], size: int) -> np.ndarray:
+            color: Tuple[int, int, int],
+            size: int, with_class=True) -> np.ndarray:
+
+    c = int(with_class)
     for anch in org.astype(int):
-        img = cv2.rectangle(img, (anch[1], anch[2]),
-                            (anch[3], anch[4]), color, size)
+        img = cv2.rectangle(img, (anch[0 + c], anch[1 + c]),
+                            (anch[2 + c], anch[3 + c]), color, size)
     return img
 
 def change_box_order(boxes: tf.Tensor,
@@ -57,3 +60,20 @@ def change_box_order(boxes: tf.Tensor,
     if order == 'xyxy2xywh':
         return tf.concat(c + [(a + b) / 2, b - a], 1)
     return tf.concat(c + [a - b / 2, a + b / 2], 1)
+
+def compute_stride_from_receptive_field(model='vgg_16', img_shape=224):
+    receptive_field, effective_stride, effective_padding = get_RF(model)
+    conv_move = np.arange(start=-effective_padding + receptive_field // 2,
+                          stop=img_shape + effective_padding - receptive_field // 2,
+                          step=effective_stride)
+
+    conv_move = conv_move[(conv_move > 0) & (conv_move < img_shape)]
+    return conv_move
+
+def get_RF(model):
+    if model == 'vgg_16':
+        receptive_field, effective_stride, effective_padding = 100 + 32, 16 * 1, 42 + 2
+    if model == 'resnet_v1_50':
+        receptive_field, effective_stride, effective_padding = 1311, 32, 618
+
+    return receptive_field, effective_stride, effective_padding
