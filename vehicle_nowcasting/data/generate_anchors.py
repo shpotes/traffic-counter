@@ -47,7 +47,7 @@ def generate_anchors(base_size: int = 2,
     ratio_anchors = _ratio_enum(base_anchor, ratios)
     anchors = np.vstack([_scale_enum(ratio_anchors[i, :], scales)
                          for i in range(ratio_anchors.shape[0])])
-    return anchors
+    return anchors.astype(np.int32)
 
 def _whctrs(anchor: np.ndarray) -> Tuple[float, float, float, float]:
     """
