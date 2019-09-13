@@ -72,8 +72,7 @@ def compute_stride_from_receptive_field(model='vgg_16', img_shape=224):
 
 def get_RF(model):
     if model == 'vgg_16':
-        #receptive_field, effective_stride, effective_padding = 100 + 32, 16 * 1, 42 + 2
-        receptive_field, effective_stride, effective_padding = 100, 16, 42
+        receptive_field, effective_stride, effective_padding = 100 + 32, 16 * 1, 42 + 2
     if model == 'resnet_v1_50':
         receptive_field, effective_stride, effective_padding = 1311, 32, 618
 

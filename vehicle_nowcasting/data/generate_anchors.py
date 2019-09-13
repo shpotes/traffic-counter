@@ -36,8 +36,8 @@ from typing import List, Tuple
 #        [-167., -343.,  184.,  360.]])
 
 def generate_anchors(base_size: int = 2,
-                     ratios: List[float] = [1, 1.25], #, 1.5, 1.75, 2],
-                     scales: np.ndarray = 2 ** 3):#2**np.arange(3, 6) - 1) -> np.ndarray:
+                     ratios: List[float] = [1, 1.25, 1.5, 1.75, 2],
+                     scales: np.ndarray = 2 ** np.arange(3, 6) - 1) -> np.ndarray:
     """
     Generate anchor (reference) windows by enumerating aspect ratios X
     scales wrt a reference (0, 0, 15, 15) window.
