@@ -7,11 +7,6 @@ The goal of this project is to generate an open and high-quality API capable of 
 
 ## Requirements
 This project requires:
-* tensorflow == 2.0.0
-* numpy >= 1.16.4
-* cv2
-* pandas
-* gin-config
 
 
 ## License
